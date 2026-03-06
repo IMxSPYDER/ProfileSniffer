@@ -1,0 +1,8 @@
+/* App CSS - Tailwind is imported in index.css */
+/* Any custom animations or styles can go here */
+
+@layer components {
+  .file-input-disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+}

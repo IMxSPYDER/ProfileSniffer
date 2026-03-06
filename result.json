@@ -1,0 +1,12 @@
+{
+    "_MukeshAmbanisdfwr": [
+        {
+            "platform": "Twitter",
+            "query": "_MukeshAmbanisdfwr",
+            "available": "False",
+            "valid": "False",
+            "success": "True",
+            "message": "Your username must be shorter than 15 characters."
+        }
+    ]
+}
