@@ -5,3 +5,4 @@ socialscan
 maigret
 gunicorn
 openpyxl
+requests
