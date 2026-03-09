@@ -119,7 +119,7 @@ from urllib.parse import urlparse
 
 app = Flask(__name__)
 
-CORS(app)
+CORS(app, origins=["https://your-netlify-site.netlify.app"])
 
 
 def extract_platform_username(url):
