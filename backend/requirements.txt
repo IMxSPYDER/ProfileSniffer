@@ -1,8 +1,8 @@
-flask
+Flask
 flask-cors
 pandas
-socialscan
-maigret
-gunicorn
 openpyxl
 requests
+maigret
+socialscan
+gunicorn

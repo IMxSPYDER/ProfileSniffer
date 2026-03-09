@@ -107,7 +107,7 @@
 # if __name__ == "__main__":
 #     app.run(debug=True)
 #     # app.run()
-
+import os
 from flask import Flask, request, send_file
 from flask_cors import CORS
 import pandas as pd
@@ -243,12 +243,15 @@ def upload_file():
     if "urls" not in df.columns:
         return {"error": "Excel must contain 'urls' column"}
     
-    if "status" or "platform" not in df.columns:
-        df["platform"] = ""
+    if "status" not in df.columns:
         df["status"] = ""
-    else:
-        df["platform"] = df["platform"].astype(str)
-        df["status"] = df["status"].astype(str)
+
+    if "platform" not in df.columns:
+        df["platform"] = ""
+
+    
+    df["platform"] = df["platform"].astype(str)
+    df["status"] = df["status"].astype(str)
 
     
     for index, row in df.iterrows():
@@ -276,5 +279,6 @@ def upload_file():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
     
