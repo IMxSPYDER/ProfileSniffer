@@ -119,7 +119,7 @@ from urllib.parse import urlparse
 
 app = Flask(__name__)
 
-CORS(app, origins=["https://profile-sniffer.netlify.app/"])
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 
 def extract_platform_username(url):

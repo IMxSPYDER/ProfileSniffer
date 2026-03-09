@@ -63,6 +63,7 @@ function App() {
         formData,
         {
           responseType: "blob",
+          timeout: 120000, // 60 seconds
         }
       );
 
