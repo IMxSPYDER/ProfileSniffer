@@ -119,7 +119,11 @@ from urllib.parse import urlparse
 
 app = Flask(__name__)
 
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(
+    app,
+    resources={r"/*": {"origins": "*"}},
+    supports_credentials=True
+)
 
 
 def extract_platform_username(url):
