@@ -236,7 +236,7 @@ def check_user(platform, username, url=None):
 def home():
     return {"status": "API running"}
 
-@app.route("/upload", methods=["POST"])
+@app.route("/upload", methods=["POST", "OPTIONS"])
 def upload_file():
 
     file = request.files["file"]
