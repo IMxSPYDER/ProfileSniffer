@@ -156,14 +156,20 @@ def extract_platform_username(url):
 
 def check_website(url):
     try:
-        r = requests.head(url, allow_redirects=True, timeout=5)
 
-        if r.status_code < 400:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36"
+        }
+
+        r = requests.get(url, headers=headers, allow_redirects=True, timeout=8)
+
+        if r.status_code < 500:
             return "YES"
         else:
             return "NO"
 
-    except Exception:
+    except Exception as e:
+        print("Website check error:", e)
         return "NO"
 
 def check_user(platform, username, url=None):
