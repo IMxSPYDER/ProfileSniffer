@@ -238,50 +238,47 @@ def home():
 @app.route("/upload", methods=["POST", "OPTIONS"])
 def upload_file():
     try:
-    if request.method == "OPTIONS":
-        return {"status": "ok"}, 200
+        if request.method == "OPTIONS":
+            return {"status": "ok"}, 200
 
-    file = request.files["file"]
+        file = request.files["file"]
+        df = pd.read_excel(file)
 
-    df = pd.read_excel(file)
+        # Expect only urls column
+        if "urls" not in df.columns:
+            return {"error": "Excel must contain 'urls' column"}
 
-    # Expect only urls column
-    if "urls" not in df.columns:
-        return {"error": "Excel must contain 'urls' column"}
-    
-    if "status" not in df.columns:
-        df["status"] = ""
+        if "status" not in df.columns:
+            df["status"] = ""
 
-    if "platform" not in df.columns:
-        df["platform"] = ""
+        if "platform" not in df.columns:
+            df["platform"] = ""
 
-    
-    df["platform"] = df["platform"].astype(str)
-    df["status"] = df["status"].astype(str)
+        df["platform"] = df["platform"].astype(str)
+        df["status"] = df["status"].astype(str)
 
-    
-    for index, row in df.iterrows():
+        for index, row in df.iterrows():
+            url = str(row["urls"])
 
-        url = str(row["urls"])
+            platform, username = extract_platform_username(url)
 
-        platform, username = extract_platform_username(url)
+            df.at[index, "platform"] = platform.capitalize()
 
-        df.at[index, "platform"] = platform.capitalize()
+            status = check_user(platform, username, url)
 
-        status = check_user(platform, username, url)
-
-        df.at[index, "status"] = status
+            df.at[index, "status"] = status
 
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
-    
+
         df.to_excel(temp_file.name, index=False)
-    
+
         return send_file(
             temp_file.name,
             as_attachment=True,
             download_name="updated_status.xlsx",
             mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
+
     except Exception as e:
         print("UPLOAD ERROR:", e)
         return {"error": str(e)}, 500
