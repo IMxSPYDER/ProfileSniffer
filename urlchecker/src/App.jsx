@@ -59,7 +59,7 @@ function App() {
 
     try {
       const response = await axios.post(
-        "https://profilesniffer.onrender.com/upload",
+        "https://nonevadingly-dicrotic-myron.ngrok-free.dev/upload",
         formData,
         {
           responseType: "blob",
