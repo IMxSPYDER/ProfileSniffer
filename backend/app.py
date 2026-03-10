@@ -283,6 +283,23 @@ def upload_file():
         print("UPLOAD ERROR:", e)
         return {"error": str(e)}, 500
 
+@app.route("/check_url", methods=["POST"])
+def check_url():
+
+    data = request.json
+    url = data.get("url")
+
+    if not url:
+        return {"error": "No URL"}
+
+    platform, username = extract_platform_username(url)
+
+    status = check_user(platform, username, url)
+
+    return {
+        "platform": platform.capitalize(),
+        "status": status
+    }
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
