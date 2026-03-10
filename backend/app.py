@@ -155,22 +155,31 @@ def extract_platform_username(url):
     return "website", domain
 
 def check_website(url):
+
     try:
 
+        if not url.startswith("http"):
+            url = "https://" + url
+
         headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36"
+            "User-Agent": "Mozilla/5.0"
         }
 
         r = requests.get(url, headers=headers, allow_redirects=True, timeout=8)
 
+        final_url = r.url
+
+        # check redirect
+        if final_url.rstrip("/") != url.rstrip("/"):
+            return "NO", f"Redirects to {final_url}"
+
         if r.status_code < 500:
-            return "YES"
-        else:
-            return "NO"
+            return "YES", "Direct website"
+
+        return "NO", f"HTTP {r.status_code}"
 
     except Exception as e:
-        print("Website check error:", e)
-        return "NO"
+        return "NO", str(e)
 
 def check_user(platform, username, url=None):
 
