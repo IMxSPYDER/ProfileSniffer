@@ -119,7 +119,11 @@ from urllib.parse import urlparse
 
 app = Flask(__name__)
 
-CORS(app, origins=["https://profile-sniffer.netlify.app"])
+CORS(
+    app,
+    resources={r"/*": {"origins": "https://profile-sniffer.netlify.app"}},
+    supports_credentials=True
+)
 
 def extract_platform_username(url):
 
@@ -233,6 +237,9 @@ def home():
 
 @app.route("/upload", methods=["POST", "OPTIONS"])
 def upload_file():
+    try:
+    if request.method == "OPTIONS":
+        return {"status": "ok"}, 200
 
     file = request.files["file"]
 
@@ -265,16 +272,19 @@ def upload_file():
 
         df.at[index, "status"] = status
 
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
-
-    df.to_excel(temp_file.name, index=False)
-
-    return send_file(
-        temp_file.name,
-        as_attachment=True,
-        download_name="updated_status.xlsx",
-        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
+    
+        df.to_excel(temp_file.name, index=False)
+    
+        return send_file(
+            temp_file.name,
+            as_attachment=True,
+            download_name="updated_status.xlsx",
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+    except Exception as e:
+        print("UPLOAD ERROR:", e)
+        return {"error": str(e)}, 500
 
 
 if __name__ == "__main__":
