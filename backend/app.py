@@ -310,11 +310,20 @@ def check_url():
 
     platform, username = extract_platform_username(url)
 
-    status = check_user(platform, username, url)
+    if platform == "website":
+        status, reason = check_website(url)
+    else:
+        status = check_user(platform, username, url)
+
+        if status == "YES":
+            reason = "Profile exists"
+        else:
+            reason = "Profile not found"
 
     return {
         "platform": platform.capitalize(),
-        "status": status
+        "status": status,
+        "reason": reason
     }
 
 if __name__ == "__main__":
