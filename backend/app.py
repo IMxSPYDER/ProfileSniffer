@@ -225,7 +225,8 @@ def check_user(platform, username, url=None):
         
         # NORMAL WEBSITE
         if platform == "website":
-            return check_website(url)
+            status, reason = check_website(url)
+            return status, reason
 
         else:
 
