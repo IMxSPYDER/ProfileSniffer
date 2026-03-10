@@ -59,7 +59,7 @@ function App() {
 
     try {
       const response = await axios.post(
-        "https://nonevadingly-dicrotic-myron.ngrok-free.dev/upload",
+        "https://profilesniffer-production.up.railway.app/upload",
         formData,
         {
           responseType: "blob",
