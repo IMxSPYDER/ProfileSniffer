@@ -119,7 +119,7 @@ from urllib.parse import urlparse
 
 app = Flask(__name__)
 
-CORS(app)
+CORS(app, origins=["https://profile-sniffer.netlify.app"])
 
 def extract_platform_username(url):
 
@@ -175,7 +175,7 @@ def check_user(platform, username, url=None):
 
             subprocess.run(
                 [
-                    "socialscan",
+                    "python", "-m", "socialscan",
                     username,
                     "--platforms",
                     platform,
@@ -211,7 +211,7 @@ def check_user(platform, username, url=None):
         else:
 
             result = subprocess.run(
-                ["maigret", username, "--site", platform],
+                ["python", "-m", "maigret", username, "--site", platform],
                 capture_output=True,
                 text=True
             )
