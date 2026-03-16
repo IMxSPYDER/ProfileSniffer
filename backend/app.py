@@ -45,6 +45,33 @@ def extract_platform_username(url):
     # website
     return "website", domain
 
+# def check_website(url):
+
+#     try:
+
+#         if not url.startswith("http"):
+#             url = "https://" + url
+
+#         headers = {
+#             "User-Agent": "Mozilla/5.0"
+#         }
+
+#         r = requests.get(url, headers=headers, allow_redirects=True, timeout=8)
+
+#         final_url = r.url
+
+#         # check redirect
+#         if final_url.rstrip("/") != url.rstrip("/"):
+#             return "NO", f"Redirects to {final_url}"
+
+#         if r.status_code < 500:
+#             return "YES", "Direct website"
+
+#         return "NO", f"HTTP {r.status_code}"
+
+#     except Exception as e:
+#         return "NO", str(e)
+
 def check_website(url):
 
     try:
@@ -60,17 +87,26 @@ def check_website(url):
 
         final_url = r.url
 
-        # check redirect
+        # redirect check
         if final_url.rstrip("/") != url.rstrip("/"):
-            return "NO", f"Redirects to {final_url}"
+            return "NO", "Redirected to another website"
 
         if r.status_code < 500:
-            return "YES", "Direct website"
+            return "YES", "Website exists"
 
-        return "NO", f"HTTP {r.status_code}"
+        return "NO", f"Server error ({r.status_code})"
 
-    except Exception as e:
-        return "NO", str(e)
+    except requests.exceptions.ConnectionError:
+        return "NO", "Website does not exist"
+
+    except requests.exceptions.Timeout:
+        return "NO", "Website timeout"
+
+    except requests.exceptions.InvalidURL:
+        return "NO", "Invalid URL"
+
+    except Exception:
+        return "NO", "Website not reachable"
 
 def check_user(platform, username, url=None):
 
