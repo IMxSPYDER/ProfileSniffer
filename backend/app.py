@@ -81,6 +81,26 @@ def check_user(platform, username, url=None):
 
         if platform in ["instagram", "twitter", "x"]:
 
+            if platform in ["twitter", "x"]:
+                if len(username) > 14:
+                    return "NO", "Your username must be shorter than 15 characters"
+        
+            temp_json = tempfile.NamedTemporaryFile(delete=False, suffix=".json")
+        
+            subprocess.run(
+                [
+                    "python", "-m", "socialscan",
+                    username,
+                    "--platforms",
+                    platform,
+                    "--json",
+                    temp_json.name
+                ],
+                capture_output=True,
+                text=True,
+                timeout=50
+            )
+
             temp_json = tempfile.NamedTemporaryFile(delete=False, suffix=".json")
 
             subprocess.run(
