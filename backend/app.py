@@ -93,7 +93,8 @@ def check_user(platform, username, url=None):
                     temp_json.name
                 ],
                 capture_output=True,
-                text=True
+                text=True,
+                timeout=50
             )
 
             with open(temp_json.name) as f:
@@ -124,7 +125,8 @@ def check_user(platform, username, url=None):
             result = subprocess.run(
                 ["python", "-m", "maigret", username, "--site", platform],
                 capture_output=True,
-                text=True
+                text=True,
+                timeout=50
             )
 
             output = result.stdout.lower()
