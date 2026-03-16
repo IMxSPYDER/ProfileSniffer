@@ -71,7 +71,6 @@ def extract_platform_username(url):
 
 #     except Exception as e:
 #         return "NO", str(e)
-
 def check_website(url):
 
     try:
@@ -87,14 +86,16 @@ def check_website(url):
 
         final_url = r.url
 
-        # redirect check
+        # Redirect detection
         if final_url.rstrip("/") != url.rstrip("/"):
-            return "NO", "Redirected to another website"
+            return "NO", "Redirects to another website"
 
-        if r.status_code < 500:
+        # Valid website
+        if r.status_code == 200:
             return "YES", "Website exists"
 
-        return "NO", f"Server error ({r.status_code})"
+        # Other HTTP responses
+        return "NO", f"HTTP {r.status_code}"
 
     except requests.exceptions.ConnectionError:
         return "NO", "Website does not exist"
