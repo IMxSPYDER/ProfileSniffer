@@ -16,6 +16,44 @@ CORS(
     supports_credentials=True
 )
 
+def check_instagram_profile(username):
+    url = f"https://www.instagram.com/{username}/"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
+
+    r = requests.get(url, headers=headers)
+
+    text = r.text.lower()
+
+    if "sorry, this page isn't available" in text:
+        return "NO", "Profile not accessible (deleted/banned)"
+
+    if r.status_code == 200:
+        return "YES", "Profile exists"
+
+    return "NO", f"HTTP {r.status_code}"
+
+def check_twitter_profile(username):
+    url = f"https://x.com/{username}"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
+
+    r = requests.get(url, headers=headers)
+
+    text = r.text.lower()
+
+    if "this account doesn’t exist" in text:
+        return "NO", "Account does not exist"
+
+    if r.status_code == 200:
+        return "YES", "Profile exists"
+
+    return "NO", f"HTTP {r.status_code}"
+
 def extract_platform_username(url):
 
     parsed = urlparse(url)
@@ -168,6 +206,14 @@ def check_user(platform, username, url=None):
 
                     if result["platform"].lower() == platform:
                         if result["available"] == "False" and result["valid"]:
+                            if platform == "instagram":
+                                status, reason = check_instagram_profile(username)
+                                return status
+                        
+                            if platform in ["twitter", "x"]:
+                                status, reason = check_twitter_profile(username)
+                                return status
+                                
                             return "YES"
 
             return "NO"
