@@ -16,104 +16,6 @@ CORS(
     supports_credentials=True
 )
 
-
-def fetch(url):
-    try:
-        session = requests.Session()
-
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Accept-Language": "en-US,en;q=0.9",
-        }
-
-        session.headers.update(headers)
-
-        response = session.get(
-            url,
-            timeout=10,
-            allow_redirects=True
-        )
-
-        return response
-
-    except requests.exceptions.RequestException as e:
-        print("Fetch error:", e)
-        return None
-
-
-def check_instagram(username):
-
-    clean_url = f"https://www.instagram.com/{username}/"
-
-    resp = fetch(clean_url)
-
-    if resp is None:
-        return "Unknown", "Network error", username
-
-    if resp.status_code == 404:
-        return "No", "Account does not exist", username
-
-    html = resp.text.lower()
-
-    IG_NOT_FOUND = [
-        "sorry, this page isn't available",
-        "page not found",
-        "content unavailable",
-        "the link you followed may be broken",
-        "the page may have been removed"
-    ]
-
-    for phrase in IG_NOT_FOUND:
-        if phrase in html:
-            return "No", "Account does not exist", username
-
-    if "this account is private" in html:
-        return "Yes", "Private account", username
-
-    if f'"username":"{username.lower()}"' in html:
-        return "Yes", "Active account", username
-
-    if '"graphql":{"user"' in html:
-        return "Yes", "Active account", username
-
-    if '"profilepage_' in html:
-        return "Yes", "Active account", username
-
-    if "no posts yet" in html:
-        return "Yes", "Active account (no posts)", username
-
-    if 'property="og:image"' in html:
-        return "Yes", "Active account", username
-
-    return "Unknown", "Could not determine", username
-
-
-def check_twitter_profile(username):
-    url = f"https://x.com/{username}"
-
-    headers = {
-        "User-Agent": "Mozilla/5.0"
-    }
-
-    try:
-        r = requests.get(url, headers=headers, timeout=10)
-        text = r.text.lower()
-
-        if (
-            "this account doesn’t exist" in text
-            or "account doesn’t exist" in text
-        ):
-            return "NO", "Account does not exist"
-
-        # If page loads → assume exists
-        if r.status_code == 200:
-            return "YES", "Profile exists"
-
-        return "NO", f"HTTP {r.status_code}"
-
-    except Exception as e:
-        return "NO", str(e)
-
 def extract_platform_username(url):
 
     parsed = urlparse(url)
@@ -236,6 +138,22 @@ def check_user(platform, username, url=None):
                 timeout=50
             )
 
+            temp_json = tempfile.NamedTemporaryFile(delete=False, suffix=".json")
+
+            subprocess.run(
+                [
+                    "python", "-m", "socialscan",
+                    username,
+                    "--platforms",
+                    platform,
+                    "--json",
+                    temp_json.name
+                ],
+                capture_output=True,
+                text=True,
+                timeout=50
+            )
+
             with open(temp_json.name) as f:
                 content = f.read().strip()
 
@@ -250,28 +168,6 @@ def check_user(platform, username, url=None):
 
                     if result["platform"].lower() == platform:
                         if result["available"] == "False" and result["valid"]:
-                            # Double check Instagram
-                            if platform == "instagram":
-                                status, reason, _ = check_instagram(username)
-                        
-                                if status.lower() == "no":
-                                    return "NO"
-                                elif status.lower() == "yes":
-                                    return "YES"
-                                else:
-                                    return "NO"
-                        
-                            # Double check Twitter/X
-                            if platform in ["twitter", "x"]:
-                                status, reason, _ = check_twitter(username)
-                        
-                                if status.lower() == "no":
-                                    return "NO"
-                                elif status.lower() == "yes":
-                                    return "YES"
-                                else:
-                                    return "NO"
-                        
                             return "YES"
 
             return "NO"
