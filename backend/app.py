@@ -153,8 +153,7 @@ def check_user(platform, username, url=None):
 
                     if result["platform"].lower() == platform:
                         if result["available"] == "False" and result["valid"]:
-                            if check_url(url):
-                                return "YES"
+                            return "YES"
 
             return "NO"
         
