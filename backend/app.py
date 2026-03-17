@@ -20,26 +20,34 @@ def check_instagram_profile(username):
     url = f"https://www.instagram.com/{username}/"
 
     headers = {
-        "User-Agent": "Mozilla/5.0"
+        "User-Agent": "Mozilla/5.0",
+        "Accept-Language": "en-US,en;q=0.9"
     }
 
-    r = requests.get(url, headers=headers, timeout=10)
+    try:
+        r = requests.get(url, headers=headers, timeout=10)
+        text = r.text.lower()
 
-    text = r.text.lower()
+        # ❌ Strong NOT EXISTS signals
+        if (
+            "sorry, this page isn't available" in text
+            or "page isn't available" in text
+            or "the link you followed may be broken" in text
+        ):
+            return "NO", "Profile not found"
 
-    # Strong detection
-    if (
-        "sorry, this page isn't available" in text
-        or "page isn't available" in text
-        or "login" in text and "signup" in text and "instagram" in text
-    ):
-        return "NO", "Profile not accessible"
+        # ⚠️ Instagram login wall (still means profile EXISTS)
+        if "login" in text and "instagram" in text:
+            return "YES", "Profile exists (login required)"
 
-    # Instagram returns 200 even for errors sometimes
-    if r.status_code == 200 and '"profilePage_' in text:
-        return "YES", "Profile exists"
+        # ✅ If status is 200 and no error message → assume exists
+        if r.status_code == 200:
+            return "YES", "Profile exists"
 
-    return "NO", "Profile not found"
+        return "NO", f"HTTP {r.status_code}"
+
+    except Exception as e:
+        return "NO", str(e)
 
 def check_twitter_profile(username):
     url = f"https://x.com/{username}"
@@ -48,20 +56,24 @@ def check_twitter_profile(username):
         "User-Agent": "Mozilla/5.0"
     }
 
-    r = requests.get(url, headers=headers, timeout=10)
+    try:
+        r = requests.get(url, headers=headers, timeout=10)
+        text = r.text.lower()
 
-    text = r.text.lower()
+        if (
+            "this account doesn’t exist" in text
+            or "account doesn’t exist" in text
+        ):
+            return "NO", "Account does not exist"
 
-    if (
-        "this account doesn’t exist" in text
-        or "account doesn’t exist" in text
-    ):
-        return "NO", "Account does not exist"
+        # If page loads → assume exists
+        if r.status_code == 200:
+            return "YES", "Profile exists"
 
-    if r.status_code == 200 and "followers" in text:
-        return "YES", "Profile exists"
+        return "NO", f"HTTP {r.status_code}"
 
-    return "NO", "Profile not found"
+    except Exception as e:
+        return "NO", str(e)
 
 def extract_platform_username(url):
 
