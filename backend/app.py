@@ -138,21 +138,6 @@ def check_user(platform, username, url=None):
                 timeout=50
             )
 
-            temp_json = tempfile.NamedTemporaryFile(delete=False, suffix=".json")
-
-            subprocess.run(
-                [
-                    "python", "-m", "socialscan",
-                    username,
-                    "--platforms",
-                    platform,
-                    "--json",
-                    temp_json.name
-                ],
-                capture_output=True,
-                text=True,
-                timeout=50
-            )
 
             with open(temp_json.name) as f:
                 content = f.read().strip()
@@ -168,7 +153,8 @@ def check_user(platform, username, url=None):
 
                     if result["platform"].lower() == platform:
                         if result["available"] == "False" and result["valid"]:
-                            return "YES"
+                            if check_url(url):
+                                return "YES"
 
             return "NO"
         
