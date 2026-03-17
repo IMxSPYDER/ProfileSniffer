@@ -23,17 +23,23 @@ def check_instagram_profile(username):
         "User-Agent": "Mozilla/5.0"
     }
 
-    r = requests.get(url, headers=headers)
+    r = requests.get(url, headers=headers, timeout=10)
 
     text = r.text.lower()
 
-    if "sorry, this page isn't available" in text:
-        return "NO", "Profile not accessible (deleted/banned)"
+    # Strong detection
+    if (
+        "sorry, this page isn't available" in text
+        or "page isn't available" in text
+        or "login" in text and "signup" in text and "instagram" in text
+    ):
+        return "NO", "Profile not accessible"
 
-    if r.status_code == 200:
+    # Instagram returns 200 even for errors sometimes
+    if r.status_code == 200 and '"profilePage_' in text:
         return "YES", "Profile exists"
 
-    return "NO", f"HTTP {r.status_code}"
+    return "NO", "Profile not found"
 
 def check_twitter_profile(username):
     url = f"https://x.com/{username}"
@@ -42,17 +48,20 @@ def check_twitter_profile(username):
         "User-Agent": "Mozilla/5.0"
     }
 
-    r = requests.get(url, headers=headers)
+    r = requests.get(url, headers=headers, timeout=10)
 
     text = r.text.lower()
 
-    if "this account doesn’t exist" in text:
+    if (
+        "this account doesn’t exist" in text
+        or "account doesn’t exist" in text
+    ):
         return "NO", "Account does not exist"
 
-    if r.status_code == 200:
+    if r.status_code == 200 and "followers" in text:
         return "YES", "Profile exists"
 
-    return "NO", f"HTTP {r.status_code}"
+    return "NO", "Profile not found"
 
 def extract_platform_username(url):
 
@@ -190,6 +199,7 @@ def check_user(platform, username, url=None):
 
                     if result["platform"].lower() == platform:
                         if result["available"] == "False" and result["valid"]:
+                            # ALWAYS verify via HTTP
                             if platform == "instagram":
                                 status, reason = check_instagram_profile(username)
                                 return status
@@ -198,7 +208,7 @@ def check_user(platform, username, url=None):
                                 status, reason = check_twitter_profile(username)
                                 return status
                                 
-                            return "YES"
+                            return "NO"
 
             return "NO"
         
