@@ -7,6 +7,10 @@ import tempfile
 import json
 import requests
 from urllib.parse import urlparse
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+import time
 
 app = Flask(__name__)
 
@@ -15,6 +19,46 @@ CORS(
     resources={r"/*": {"origins": "https://profile-sniffer.netlify.app"}},
     supports_credentials=True
 )
+
+def check_with_selenium(url):
+    try:
+        options = Options()
+        options.add_argument("--headless")  # run in background
+        options.add_argument("--disable-blink-features=AutomationControlled")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+
+        driver = webdriver.Chrome(options=options)
+        driver.get(url)
+
+        time.sleep(5)
+
+        page_text = driver.find_element(By.TAG_NAME, "body").text.lower()
+
+        driver.quit()
+
+        # Instagram checks
+        if "instagram.com" in url:
+            if "sorry, this page isn't available" in page_text:
+                return "NO", "Profile not available"
+            if "log in" in page_text and "sign up" in page_text:
+                return "UNKNOWN", "Login required"
+
+            return "YES", "Profile exists"
+
+        # X (Twitter) checks
+        if "x.com" in url or "twitter.com" in url:
+            if "this account doesn’t exist" in page_text:
+                return "NO", "Account does not exist"
+            if "account suspended" in page_text:
+                return "NO", "Account suspended"
+
+            return "YES", "Profile exists"
+
+        return "UNKNOWN", "Platform not handled"
+
+    except Exception as e:
+        return "NO", str(e)
 
 def extract_platform_username(url):
 
@@ -118,44 +162,42 @@ def check_user(platform, username, url=None):
 
         if platform in ["instagram", "twitter", "x"]:
 
-            if platform in ["twitter", "x"]:
-                if len(username) > 14:
-                    return "NO", "Your username must be shorter than 15 characters"
-        
-            temp_json = tempfile.NamedTemporaryFile(delete=False, suffix=".json")
-        
-            subprocess.run(
-                [
-                    "python", "-m", "socialscan",
-                    username,
-                    "--platforms",
-                    platform,
-                    "--json",
-                    temp_json.name
-                ],
-                capture_output=True,
-                text=True,
-                timeout=50
-            )
+            quick_status = "NO"
 
+            try:
+                temp_json = tempfile.NamedTemporaryFile(delete=False, suffix=".json")
 
-            with open(temp_json.name) as f:
-                content = f.read().strip()
+                subprocess.run(
+                    [
+                        "python", "-m", "socialscan",
+                        username,
+                        "--platforms",
+                        platform,
+                        "--json",
+                        temp_json.name
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=30
+                )
 
-                if not content:
-                    return "NO"
+                with open(temp_json.name) as f:
+                    content = f.read().strip()
+                    if content:
+                        data = json.loads(content)
 
-                data = json.loads(content)
+                        if username in data:
+                            for result in data[username]:
+                                if result["platform"].lower() == platform:
+                                    if result["available"] == "False" and result["valid"]:
+                                        quick_status = "YES"
 
-            if username in data:
+            except:
+                pass
 
-                for result in data[username]:
+            selenium_status, reason = check_with_selenium(url)
 
-                    if result["platform"].lower() == platform:
-                        if result["available"] == "False" and result["valid"]:
-                            return "YES"
-
-            return "NO"
+            return selenium_status
         
         # NORMAL WEBSITE
         if platform == "website":
