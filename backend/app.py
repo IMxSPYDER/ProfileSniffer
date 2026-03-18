@@ -106,7 +106,8 @@ def check_with_selenium(url):
         "profile may have been removed"
         "the page may have been removed",
         "this account doesn’t exist",
-        "try searching for another"
+        "try searching for another",
+        "account suspended"
         ]
 
 
