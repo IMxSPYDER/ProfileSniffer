@@ -106,8 +106,6 @@ def check_with_selenium(url):
                 return "NO", "Profile not available"
             if "page isn't available" in page_text:
                 return "NO", "Profile removed"
-            if "log in" in page_text and "sign up" in page_text:
-                return "UNKNOWN", "Login required"
 
             return "YES", "Profile exists"
 
