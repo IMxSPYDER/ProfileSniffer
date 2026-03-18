@@ -86,7 +86,7 @@ def check_with_selenium(url):
 
         options.binary_location = "/usr/bin/chromium"
 
-        service = Service("/usr/bin/chromedriver")
+        service = Service("/usr/lib/chromium/chromedriver")
 
         driver = webdriver.Chrome(service=service, options=options)
         
