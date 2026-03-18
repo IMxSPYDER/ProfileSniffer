@@ -206,7 +206,9 @@ def check_with_selenium(url):
         "try searching for another",
         "account suspended",
         "isn't available",
-        "404 not found"
+        "404 not found",
+        "hmm...this page doesn’t exist.",
+        "try searching for something else."
         ]
 
 
