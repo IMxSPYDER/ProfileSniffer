@@ -49,27 +49,124 @@ def extract_platform_username(url):
 # -------------------------------
 # Website checker
 # -------------------------------
+# def check_website(url):
+#     try:
+#         if not url.startswith("http"):
+#             url = "https://" + url
+
+#         headers = {"User-Agent": "Mozilla/5.0"}
+#         r = requests.get(url, headers=headers, allow_redirects=True, timeout=8)
+
+#         final_url = r.url
+
+#         if final_url.rstrip("/") != url.rstrip("/"):
+#             return "NO", "Redirects to another website"
+
+#         if r.status_code == 200:
+#             return "YES", "Website exists"
+
+#         return "NO", f"HTTP {r.status_code}"
+
+#     except:
+#         return "NO", "Website not reachable"
+
+# -------------------------------
+# Website checker
+# -------------------------------
+
 def check_website(url):
     try:
         if not url.startswith("http"):
             url = "https://" + url
 
-        headers = {"User-Agent": "Mozilla/5.0"}
-        r = requests.get(url, headers=headers, allow_redirects=True, timeout=8)
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Connection": "keep-alive"
+        }
+
+        r = requests.get(url, headers=headers, allow_redirects=True, timeout=10)
 
         final_url = r.url
-
+        
         if final_url.rstrip("/") != url.rstrip("/"):
             return "NO", "Redirects to another website"
+        
+        status_code = r.status_code
 
-        if r.status_code == 200:
+        #  Clearly exists
+        if status_code == 200:
             return "YES", "Website exists"
 
-        return "NO", f"HTTP {r.status_code}"
+        #  clearly dead
+        if status_code == 404:
+            return "NO", "404 Not Found"
 
-    except:
-        return "NO", "Website not reachable"
+        #  BLOCKED / SUSPICIOUS → USE SELENIUM
+        if status_code in [403, 406, 429]:
+            selenium_status, reason = check_website_selenium(url)
+            return selenium_status, reason
 
+        # fallback
+        if status_code < 500:
+            return "YES", f"Website exists (HTTP {status_code})"
+
+        return "NO", f"Server error {status_code}"
+
+    except Exception as e:
+        return "NO", str(e)
+
+# -------------------------------
+# Website checker selenium
+# -------------------------------
+def check_website_selenium(url):
+    try:
+        options = Options()
+        options.add_argument("--headless=new")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--window-size=1920,1080")
+
+        options.binary_location = "/usr/bin/chromium"
+
+        service = Service("/usr/bin/chromedriver")
+        driver = webdriver.Chrome(service=service, options=options)
+
+        driver.get(url)
+        time.sleep(5)
+
+        page_text = driver.find_element(By.TAG_NAME, "body").text.lower()
+        page_source = driver.page_source.lower()
+
+        driver.quit()
+
+        #  Strong NOT FOUND signals
+        NOT_FOUND_WEBSITE = [
+            "404 not found",
+            "page not found",
+            "this site can’t be reached",
+            "site can’t be reached",
+            "server not found",
+            "dns_probe_finished_nxdomain",
+            "domain not found",
+            "error 404",
+            "not found",
+        ]
+
+        if any(keyword in page_text for keyword in NOT_FOUND_WEBSITE):
+            return "NO", "Website not found"
+
+        #  Empty page check
+        if len(page_text.strip()) < 20:
+            return "NO", "Empty page"
+
+        #  Otherwise exists
+        return "YES", "Website exists (verified by browser)"
+
+    except Exception as e:
+        return "NO", str(e)
 
 # -------------------------------
 # Selenium checker
