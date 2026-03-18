@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
+# from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
 
 import time
@@ -85,16 +85,19 @@ def check_with_selenium(url):
         options.add_argument("--window-size=1920,1080")
 
         options.binary_location = "/usr/bin/chromium"
-        service = Service("/usr/bin/chromedriver")
-        driver = webdriver.Chrome(service=service, options=options)
 
+        service = Service("/usr/bin/chromedriver")
+
+        driver = webdriver.Chrome(service=service, options=options)
+        
+        driver.set_page_load_timeout(50)
         driver.get(url)
         time.sleep(5)
 
         page_text = driver.find_element(By.TAG_NAME, "body").text.lower()
         driver.quit()
 
-        # print(page_text)
+        print(page_text)
 
         NOT_FOUND = [
         "sorry, this page isn't available",
