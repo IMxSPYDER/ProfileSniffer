@@ -109,7 +109,7 @@ def check_with_selenium(url):
 
             
 
-            return "YES", "Profile exists"
+            return page_text, "Profile exists"
 
         # ---------------- X (TWITTER) ----------------
         if "x.com" in url or "twitter.com" in url:
