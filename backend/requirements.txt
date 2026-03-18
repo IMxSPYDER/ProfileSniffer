@@ -6,3 +6,4 @@ requests
 maigret
 socialscan
 gunicorn
+selenium
