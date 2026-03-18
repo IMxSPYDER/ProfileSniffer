@@ -8,26 +8,23 @@ import json
 import requests
 from urllib.parse import urlparse
 
-#  Selenium imports
+# Selenium
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
+
 import time
 
 app = Flask(__name__)
 
-CORS(
-    app,
-    resources={r"/*": {"origins": "*"}},
-    supports_credentials=True
-)
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 # -------------------------------
 # Extract platform + username
 # -------------------------------
 def extract_platform_username(url):
-
     parsed = urlparse(url)
     domain = parsed.netloc.lower()
     path = parsed.path.strip("/")
@@ -58,8 +55,8 @@ def check_website(url):
             url = "https://" + url
 
         headers = {"User-Agent": "Mozilla/5.0"}
-
         r = requests.get(url, headers=headers, allow_redirects=True, timeout=8)
+
         final_url = r.url
 
         if final_url.rstrip("/") != url.rstrip("/"):
@@ -75,24 +72,21 @@ def check_website(url):
 
 
 # -------------------------------
-# Selenium checker (MAIN FIX)
+# Selenium checker
 # -------------------------------
 def check_with_selenium(url):
     try:
         options = Options()
         options.add_argument("--headless=new")
+        options.add_argument("--disable-gpu")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--disable-gpu")
+        options.add_argument("--remote-debugging-port=9222")
+        options.add_argument("--window-size=1920,1080")
 
-        # Railway path (fallback to local if not present)
-        chrome_driver_path = os.environ.get("CHROMEDRIVER_PATH", None)
-
-        if chrome_driver_path:
-            service = Service(chrome_driver_path)
-            driver = webdriver.Chrome(service=service, options=options)
-        else:
-            driver = webdriver.Chrome(options=options)
+        options.binary_location = "/usr/bin/chromium"
+        service = Service("/usr/bin/chromedriver")
+        driver = webdriver.Chrome(service=service, options=options)
 
         driver.get(url)
         time.sleep(5)
@@ -100,59 +94,62 @@ def check_with_selenium(url):
         page_text = driver.find_element(By.TAG_NAME, "body").text.lower()
         driver.quit()
 
-        # ---------------- INSTAGRAM ----------------
+        # print(page_text)
+
+        NOT_FOUND = [
+        "sorry, this page isn't available",
+        "page not found",
+        "content unavailable",
+        "the link you followed may be broken",
+        "profile isn't available",
+        "profile may have been removed",
+        "the page may have been removed",
+        "this account doesn’t exist",
+        "try searching for another"
+        ]
+
+
+        # -------- Instagram --------
         if "instagram.com" in url:
-            if "sorry, this page isn't available" in page_text:
+            if any(keyword in page_text for keyword in NOT_FOUND):
                 return "NO", "Profile not available"
-            if "page isn't available" in page_text:
-                return "NO", "Profile removed"
+            return "YES", "Profile exists"
 
-            
-
-            return page_text, "Profile exists"
-
-        # ---------------- X (TWITTER) ----------------
+        # -------- Twitter / X --------
         if "x.com" in url or "twitter.com" in url:
-            if "this account doesn’t exist" in page_text:
-                return "NO", "Account does not exist"
-            if "account suspended" in page_text:
-                return "NO", "Account suspended"
-
+            if any(keyword in page_text for keyword in NOT_FOUND):
+                return "NO", "Profile not available"
             return "YES", "Profile exists"
 
         return "UNKNOWN", "Unknown platform"
 
     except Exception as e:
+        print("Selenium error:", e)
         return "NO", str(e)
 
-
 # -------------------------------
-# Main user checker
+# Main checker
 # -------------------------------
 def check_user(platform, username, url=None):
-
     username = str(username)
     platform = str(platform).lower()
 
     try:
-
-        # ---------------- SOCIAL MEDIA ----------------
+        # -------- SOCIAL MEDIA --------
         if platform in ["instagram", "twitter", "x"]:
 
             quick_status = "NO"
 
-            #  STEP 1: SOCIALSCAN (FAST CHECK)
+            # STEP 1: socialscan
             try:
                 temp_json = tempfile.NamedTemporaryFile(delete=False, suffix=".json")
 
                 subprocess.run(
                     [
-                        "python", "-m", "socialscan",
+                        "socialscan",
                         username,
-                        "--platforms",
-                        platform,
-                        "--json",
-                        temp_json.name
+                        "--platforms", platform,
+                        "--json", temp_json.name
                     ],
                     capture_output=True,
                     text=True,
@@ -174,29 +171,25 @@ def check_user(platform, username, url=None):
             except Exception as e:
                 print("Socialscan error:", e)
 
-            #  STEP 2: IF USERNAME DOESN'T EXIST → STOP
+            # STEP 2: stop if not found
             if quick_status == "NO":
                 return "NO", "Username not found"
 
-            #  STEP 3: USERNAME EXISTS → VERIFY WITH SELENIUM
+            # STEP 3: verify with Selenium
             selenium_status, reason = check_with_selenium(url)
 
-            #  STEP 4: FINAL DECISION (ONLY FROM SELENIUM)
             if selenium_status == "YES":
                 return "YES", "Profile exists"
-
             elif selenium_status == "NO":
                 return "NO", reason
-
             else:
-                # fallback: if selenium unsure but username exists
-                return "YES", "Username exists (could not fully verify)"
+                return "YES", "Username exists (partial verification)"
 
-        # ---------------- WEBSITE ----------------
+        # -------- WEBSITE --------
         if platform == "website":
             return check_website(url)
 
-        # ---------------- OTHER ----------------
+        # -------- OTHER (Maigret) --------
         result = subprocess.run(
             ["python", "-m", "maigret", username, "--site", platform],
             capture_output=True,
@@ -215,6 +208,7 @@ def check_user(platform, username, url=None):
         print("Error:", e)
         return "NO", str(e)
 
+
 # -------------------------------
 # Routes
 # -------------------------------
@@ -225,7 +219,6 @@ def home():
 
 @app.route("/check_url", methods=["POST"])
 def check_url():
-
     data = request.json
     url = data.get("url")
 
@@ -263,7 +256,6 @@ def upload_file():
             url = str(row["urls"])
 
             platform, username = extract_platform_username(url)
-
             status, reason = check_user(platform, username, url)
 
             df.at[index, "platform"] = platform.capitalize()
@@ -283,6 +275,8 @@ def upload_file():
         return {"error": str(e)}, 500
 
 
+# -------------------------------
+# Run locally
 # -------------------------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
