@@ -97,7 +97,7 @@ def check_with_selenium(url):
         page_text = driver.find_element(By.TAG_NAME, "body").text.lower()
         driver.quit()
 
-        # print(page_text)
+        print(page_text)
 
         NOT_FOUND = [
         "sorry, this page isn't available",
