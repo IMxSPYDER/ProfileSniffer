@@ -103,7 +103,7 @@ def check_with_selenium(url):
         "content unavailable",
         "the link you followed may be broken",
         "profile isn't available",
-        "profile may have been removed"
+        "profile may have been removed",
         "the page may have been removed",
         "this account doesn’t exist",
         "try searching for another",
