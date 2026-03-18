@@ -83,9 +83,9 @@ def check_with_selenium(url):
         options.add_argument("--disable-gpu")
         options.add_argument("--window-size=1920,1080")
         
-        options.binary_location = "/usr/bin/chromium"
+        chrome_driver_path = os.environ.get("CHROMEDRIVER_PATH", "/usr/bin/chromedriver")
         
-        service = Service("/usr/local/bin/chromedriver")
+        service = Service(chrome_driver_path)
         
         driver = webdriver.Chrome(service=service, options=options)
         
