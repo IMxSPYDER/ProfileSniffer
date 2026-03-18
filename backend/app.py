@@ -78,16 +78,15 @@ def check_with_selenium(url):
     try:
         options = Options()
         options.add_argument("--headless=new")
-        options.add_argument("--disable-gpu")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--remote-debugging-port=9222")
+        options.add_argument("--disable-gpu")
         options.add_argument("--window-size=1920,1080")
-
+        
         options.binary_location = "/usr/bin/chromium"
-
-        service = Service("/usr/lib/chromium/chromedriver")
-
+        
+        service = Service("/usr/local/bin/chromedriver")
+        
         driver = webdriver.Chrome(service=service, options=options)
         
         driver.set_page_load_timeout(50)
