@@ -8,7 +8,7 @@ import json
 import requests
 from urllib.parse import urlparse
 
-# ✅ Selenium imports
+#  Selenium imports
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
@@ -75,7 +75,7 @@ def check_website(url):
 
 
 # -------------------------------
-# 🔥 Selenium checker (MAIN FIX)
+# Selenium checker (MAIN FIX)
 # -------------------------------
 def check_with_selenium(url):
     try:
@@ -85,7 +85,7 @@ def check_with_selenium(url):
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-gpu")
 
-        # 👉 Railway path (fallback to local if not present)
+        # Railway path (fallback to local if not present)
         chrome_driver_path = os.environ.get("CHROMEDRIVER_PATH", None)
 
         if chrome_driver_path:
@@ -107,6 +107,8 @@ def check_with_selenium(url):
             if "page isn't available" in page_text:
                 return "NO", "Profile removed"
 
+            
+
             return "YES", "Profile exists"
 
         # ---------------- X (TWITTER) ----------------
@@ -125,7 +127,7 @@ def check_with_selenium(url):
 
 
 # -------------------------------
-# 🔥 Main user checker
+# Main user checker
 # -------------------------------
 def check_user(platform, username, url=None):
 
@@ -139,7 +141,7 @@ def check_user(platform, username, url=None):
 
             quick_status = "NO"
 
-            # ⚡ FAST CHECK (socialscan)
+            #  STEP 1: SOCIALSCAN (FAST CHECK)
             try:
                 temp_json = tempfile.NamedTemporaryFile(delete=False, suffix=".json")
 
@@ -154,7 +156,7 @@ def check_user(platform, username, url=None):
                     ],
                     capture_output=True,
                     text=True,
-                    timeout=25
+                    timeout=20
                 )
 
                 with open(temp_json.name) as f:
@@ -169,23 +171,32 @@ def check_user(platform, username, url=None):
                                     if result["available"] == "False" and result["valid"]:
                                         quick_status = "YES"
 
-            except:
-                pass
+            except Exception as e:
+                print("Socialscan error:", e)
 
-            # ❌ Username not taken
+            #  STEP 2: IF USERNAME DOESN'T EXIST → STOP
             if quick_status == "NO":
                 return "NO", "Username not found"
 
-            # 🔥 FINAL CHECK WITH SELENIUM
+            #  STEP 3: USERNAME EXISTS → VERIFY WITH SELENIUM
             selenium_status, reason = check_with_selenium(url)
 
-            return selenium_status, reason
+            #  STEP 4: FINAL DECISION (ONLY FROM SELENIUM)
+            if selenium_status == "YES":
+                return "YES", "Profile exists"
+
+            elif selenium_status == "NO":
+                return "NO", reason
+
+            else:
+                # fallback: if selenium unsure but username exists
+                return "YES", "Username exists (could not fully verify)"
 
         # ---------------- WEBSITE ----------------
         if platform == "website":
             return check_website(url)
 
-        # ---------------- OTHER PLATFORMS ----------------
+        # ---------------- OTHER ----------------
         result = subprocess.run(
             ["python", "-m", "maigret", username, "--site", platform],
             capture_output=True,
@@ -203,7 +214,6 @@ def check_user(platform, username, url=None):
     except Exception as e:
         print("Error:", e)
         return "NO", str(e)
-
 
 # -------------------------------
 # Routes
