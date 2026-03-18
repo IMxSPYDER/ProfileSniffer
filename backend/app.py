@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-# from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
 
 import time
@@ -78,18 +78,17 @@ def check_with_selenium(url):
     try:
         options = Options()
         options.add_argument("--headless=new")
+        options.add_argument("--disable-gpu")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--disable-gpu")
+        options.add_argument("--remote-debugging-port=9222")
         options.add_argument("--window-size=1920,1080")
-        
-        options.binary_location = "/usr/bin/chrome"
-        
-        service = Service("/usr/local/bin/chromedriver")
-        
+
+        options.binary_location = "/usr/bin/chromium"
+
+        service = Service("/usr/bin/chromedriver")
         driver = webdriver.Chrome(service=service, options=options)
-        
-        driver.set_page_load_timeout(50)
+
         driver.get(url)
         time.sleep(5)
 
@@ -104,7 +103,7 @@ def check_with_selenium(url):
         "content unavailable",
         "the link you followed may be broken",
         "profile isn't available",
-        "profile may have been removed",
+        "profile may have been removed"
         "the page may have been removed",
         "this account doesn’t exist",
         "try searching for another"
@@ -281,5 +280,6 @@ def upload_file():
 # Run locally
 # -------------------------------
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=10000, debug=True) 
+
+
