@@ -208,7 +208,8 @@ def check_with_selenium(url):
         "isn't available",
         "404 not found",
         "hmm...this page doesn’t exist.",
-        "try searching for something else."
+        "try searching for something else.",
+        "this content isn't available at the moment"
         ]
 
 
@@ -222,6 +223,11 @@ def check_with_selenium(url):
         if "x.com" in url or "twitter.com" in url:
             if any(keyword in page_text for keyword in NOT_FOUND):
                 return "NO", "Profile not available"
+            return "YES", "Profile exists"
+
+        if "facebook.com" in url:
+            if any(keyword in page_text for keyword in NOT_FOUND):
+                return "NO", "Facebook profile not available"
             return "YES", "Profile exists"
 
         return "UNKNOWN", "Unknown platform"
@@ -239,7 +245,7 @@ def check_user(platform, username, url=None):
 
     try:
         # -------- SOCIAL MEDIA --------
-        if platform in ["instagram", "twitter", "x"]:
+        if platform in ["instagram", "twitter", "x", "facebook"]:
 
             quick_status = "NO"
 
