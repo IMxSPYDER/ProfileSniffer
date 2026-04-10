@@ -1,6 +1,6 @@
 FROM python:3.10-slim
 
-# Install Chrome + dependencies
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     wget \
     curl \
@@ -8,22 +8,23 @@ RUN apt-get update && apt-get install -y \
     gnupg \
     chromium \
     chromium-driver \
+    gcc \
+    pkg-config \
+    libcairo2-dev \
+    python3-dev \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libgdk-pixbuf2.0-0 \
+    shared-mime-info \
     && rm -rf /var/lib/apt/lists/*
 
-# Set display port
-ENV PORT=10000
-
-# Set working dir
 WORKDIR /app
 
-# Copy files
 COPY . .
 
-# Install Python deps
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expose port
-EXPOSE 10000
+EXPOSE 1000
 
-# Run app
-CMD ["gunicorn", "--bind", "0.0.0.0:10000", "app:app"]
+CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:1000"]
