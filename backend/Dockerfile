@@ -23,6 +23,6 @@ COPY . .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-EXPOSE 1000
+EXPOSE 10000
 
-CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:1000"]
+CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:10000"]
