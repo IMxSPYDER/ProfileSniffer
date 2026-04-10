@@ -281,8 +281,8 @@ def check_user(platform, username, url=None):
                 print("Socialscan error:", e)
 
             # STEP 2: stop if not found
-            if quick_status == "NO":
-                return "NO", "Username not found"
+            # if quick_status == "NO":
+            #     return "NO", "Username not found"
 
             # STEP 3: verify with Selenium
             selenium_status, reason = check_with_selenium(url)
